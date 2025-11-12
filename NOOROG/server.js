@@ -157,4 +157,9 @@ app.delete('/api/listings/:id', (req, res) => {
 // 🚀 Сервер асаах
 // ----------------------------
 const PORT = process.env.PORT || 3000;
+// Root руу орсон хүн автоматаар home.html руу чиглэнэ
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'home.html'));
+});
+
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
