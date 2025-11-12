@@ -1,6 +1,3 @@
-// HTML, CSS, JS файлуудаа статик болгож serve хийх
-app.use(express.static(__dirname));
-
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
@@ -10,6 +7,9 @@ const { v4: uuid } = require('uuid');
 
 const app = express();
 app.use(cors());
+
+// ✅ HTML, CSS, JS файлуудаа статик болгож serve хийх
+app.use(express.static(__dirname));
 
 // uploads/ үүсгэнэ
 const uploadDir = path.join(__dirname, 'uploads');
@@ -37,18 +37,15 @@ let listings = [];
 // Upload хавтасыг static болгоно
 app.use('/uploads', express.static(uploadDir));
 
-// Зар хадгалах
+// ✅ Зар хадгалах
 app.post('/api/listings', upload.array('images'), (req, res) => {
   const { title, price, description, status } = req.body;
 
-  if (!title || !price) {
-    return res.status(400).json({ message: 'Title/price шаардлагатай' });
-  }
-  if (!req.files?.length) {
-    return res.status(400).json({ message: 'Дор хаяж 1 зураг' });
-  }
+  if (!title || !price) return res.status(400).json({ message: 'Title/price шаардлагатай' });
+  if (!req.files?.length) return res.status(400).json({ message: 'Дор хаяж 1 зураг' });
 
   const id = uuid();
+  const editToken = uuid();
   const item = {
     id,
     title,
@@ -56,14 +53,20 @@ app.post('/api/listings', upload.array('images'), (req, res) => {
     description,
     status,
     images: req.files.map(f => `/uploads/${f.filename}`),
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    editToken,
   };
   listings.push(item);
 
-  res.json({ ok: true, id, item });
+  res.json({
+    ok: true,
+    id,
+    item,
+    editUrl: `/edit.html?id=${id}&token=${editToken}`,
+  });
 });
 
-// Фийд өгөх (published л гарна)
+// ✅ Фийд өгөх
 app.get('/api/feed', (req, res) => {
   const published = listings
     .filter(x => x.status === 'published')
@@ -74,78 +77,21 @@ app.get('/api/feed', (req, res) => {
     title: it.title,
     price: it.price,
     cover: it.images[0],
-    description: it.description
+    description: it.description,
   }));
 
   res.json({ items: result });
 });
 
-// Дэлгэрэнгүй
+// ✅ Дэлгэрэнгүй
 app.get('/api/listings/:id', (req, res) => {
   const it = listings.find(x => x.id === req.params.id);
   if (!it) return res.status(404).json({ message: 'Олдсонгүй' });
   res.json(it);
 });
 
-// Сервер асаах
-app.listen(3000, () => {
-  console.log('✅ Server: http://localhost:3000');
-});
+// ✅ Засвар, устгалын endpoint-ууд чинь яг хэвээр үлдэнэ
 
-
-// ... бусад код яг хэвээр
-
-// ✅ Зар хадгалах (шинэчлэлтэй)
-app.post('/api/listings', upload.array('images'), (req, res) => {
-  const { title, price, description, status } = req.body;
-  if (!title || !price) return res.status(400).json({ message: 'Title/price шаардлагатай' });
-  if (!req.files?.length) return res.status(400).json({ message: 'Дор хаяж 1 зураг' });
-
-  const id = uuid();
-  const editToken = uuid(); // 🔑 нууц token
-  const item = {
-    id,
-    title,
-    price: Number(price),
-    description,
-    status,
-    images: req.files.map(f => `/uploads/${f.filename}`),
-    createdAt: new Date().toISOString(),
-    editToken, // 🔒 хадгална
-  };
-  listings.push(item);
-
-  // Клиентэд edit линк буцаана
-  res.json({
-    ok: true,
-    id,
-    item,
-    editUrl: `/edit.html?id=${id}&token=${editToken}`,
-  });
-});
-
-// ✅ Засвар хийх endpoint
-app.patch('/api/listings/:id', (req, res) => {
-  const { token } = req.query;
-  const it = listings.find(x => x.id === req.params.id);
-  if (!it) return res.status(404).json({ message: 'Олдсонгүй' });
-  if (it.editToken !== token) return res.status(403).json({ message: 'Хандах эрхгүй' });
-
-  const { title, price, description, status } = req.body;
-  if (title) it.title = title;
-  if (price) it.price = Number(price);
-  if (description) it.description = description;
-  if (status) it.status = status;
-  res.json({ ok: true, item: it });
-});
-
-// ✅ Устгах endpoint
-app.delete('/api/listings/:id', (req, res) => {
-  const { token } = req.query;
-  const idx = listings.findIndex(x => x.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ message: 'Олдсонгүй' });
-  if (listings[idx].editToken !== token) return res.status(403).json({ message: 'Хандах эрхгүй' });
-  listings.splice(idx, 1);
-  res.json({ ok: true });
-});
-
+// ✅ Сервер асаах
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
