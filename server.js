@@ -1,5 +1,5 @@
 // HTML, CSS, JS файлуудаа статик болгож serve хийх
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, './')));
 
 const express = require('express');
 const multer = require('multer');
@@ -98,3 +98,8 @@ app.get('/api/listings/:id', (req, res) => {
 // ✅ Сервер асаах
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+// Root рүү орсон хүнийг автоматаар home.html рүү илгээнэ
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'home.html'));
+});
+
