@@ -148,3 +148,4 @@ app.delete('/api/listings/:id', (req, res) => {
   listings.splice(idx, 1);
   res.json({ ok: true });
 });
+
