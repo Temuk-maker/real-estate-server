@@ -1,0 +1,89 @@
+<button id="Ulhodloh">Үл хөдлөх</button>
+
+<!-- Бүрхүүл -->
+<div id="overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); 
+                         align-items:center; justify-content:center;">
+    <!-- Popup -->
+    <div id="popup" role="dialog" aria-modal="true" tabindex="-1"
+        style="background:#fff; padding:16px; border-radius:8px; min-width:260px; text-align:center;">
+        <p>Үл хөдлөх товч дарагдлаа!</p>
+        <p>зар оруулах</p>
+        <button id="closeBtn">Хаах</button>
+    </div>
+
+    <!-- + товч, файл сонгох input, урьдчилсан харагдац -->
+    <!-- <div>
+        <button id="addImage" title="Зураг нэмэх">+</button>
+        <input id="imgInput" type="file" accept="image/*" hidden>
+    </div> -->
+<!-- 
+    <!-- Сонгосон зургийг энд үзүүлнэ -->
+    <!-- <div id="previewBox"></div> --> -->
+
+</div>
+
+<script>
+    // ✅ Зөв нэршилтэйгээр DOM-аас авна
+    const openBtn = document.getElementById('Ulhodloh');
+    const overlay = document.getElementById('overlay');
+    const popup = document.getElementById('popup');
+    const closeBtn = document.getElementById('closeBtn');
+
+    // ✅ Нээх функц — таны showPopup-ийн зөв хувилбар
+    function showPopup() {
+        overlay.style.display = 'flex';            // бүрхүүлийг харуулна
+        requestAnimationFrame(() => popup.focus()); // repaint-ийн дараа фокусыг popup руу
+        document.addEventListener('keydown', onEsc); // ESC сонсоно
+    }
+
+    // ✅ Хаах функц
+    // function hidePopup() {
+    //     overlay.style.display = 'none';
+    //     document.removeEventListener('keydown', onEsc);
+    //     openBtn.focus(); // accessibility — анхны товч руу буцааж фокуслана
+    // }
+
+    // ✅ ESC товч дарахад хаах
+    // function onEsc(e) {
+    //     if (e.key === 'Escape') hidePopup();
+    // }
+
+    // ✅ Эвентүүд
+    openBtn.addEventListener('click', showPopup);
+    // closeBtn.addEventListener('click', hidePopup);
+    // overlay.addEventListener('click', (e) => {
+    //     if (e.target === overlay) hidePopup(); // гадна дарвал хаах
+    // });
+</script>
+
+<!-- + temdeg daraad zurag uusgegch 
+<script>
+  // --- Зураг нэмэхэд хэрэгтэй элементүүд ---
+  const addImageBtn = document.getElementById('addImage');
+  const imgInput    = document.getElementById('imgInput');
+  const previewBox  = document.getElementById('previewBox');
+
+  // “+” товч → файл сонгох цонх нээх
+  addImageBtn.addEventListener('click', () => {
+    imgInput.click();
+  });
+
+  // Файл сонгоход урьдчилан харагдуулах
+  imgInput.addEventListener('change', () => {
+    const file = imgInput.files && imgInput.files[0];
+    if (!file) return;
+
+    // Хуучин зургийг цэвэрлэнэ
+    previewBox.innerHTML = '';
+
+    // Шууд харагдуулах (object URL ашиглавал хурдан)
+    const url = URL.createObjectURL(file);
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = 'Сонгосон зураг';
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '220px';
+
+    previewBox.appendChild(img);
+  });
+</script> -->

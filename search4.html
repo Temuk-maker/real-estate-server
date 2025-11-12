@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h3>Зар нэмэх</h3>
+
+<input id="title" placeholder="Гарчиг"><br><br>
+<textarea id="content" placeholder="Тайлбар"></textarea><br><br>
+<input type="file" id="image"><br><br>
+<button id="addBtn">Нэмэх</button>
+
+<hr>
+
+<h3>Хайлт</h3>
+<input id="search" placeholder="Хайх...">
+<ul id="results"></ul>
+
+<script>
+let DATA = [];
+
+// --- Зураг upload хийх функц ---
+async function uploadImage(file) {
+  const form = new FormData();
+  form.append("image", file);
+
+  const res = await fetch("http://localhost:3000/upload", {
+    method: "POST",
+    body: form
+  });
+
+  const data = await res.json();
+  return data.url; // ← backend-аас буцаасан зурагны URL
+}
+
+
+// --- Зар нэмэх ---
+document.getElementById("addBtn").onclick = async () => {
+  const title = document.getElementById("title").value;
+  const content = document.getElementById("content").value;
+  const file = document.getElementById("image").files[0];
+
+  if (!title || !content || !file) {
+    alert("Бүгдийг бөглөнө үү");
+    return;
+  }
+
+  // Зураг upload → URL авах
+  const imageURL = await uploadImage(file);
+
+  // Зарыг хадгалах
+  DATA.push({ title, content, image: imageURL });
+
+  alert("Зар нэмэгдлээ");
+};
+
+
+// --- Хайлтын систем ---
+document.getElementById("search").addEventListener("input", function () {
+  const q = this.value.toLowerCase();
+  const out = document.getElementById("results");
+  out.innerHTML = "";
+
+  DATA.forEach(item => {
+    const text = (item.title + item.content).toLowerCase();
+
+    if (text.includes(q)) {
+      const li = document.createElement("li");
+
+      const img = document.createElement("img");
+      img.src = item.image;
+      img.width = 120;
+
+      const title = document.createElement("div");
+      title.textContent = item.title;
+
+      li.appendChild(img);
+      li.appendChild(title);
+      out.appendChild(li);
+    }
+  });
+});
+</script>
+
+</body>
+</html>

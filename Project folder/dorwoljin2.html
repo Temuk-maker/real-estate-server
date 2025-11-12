@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8" />
+  <title>Popup Button Demo</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #f3f4f6;
+    }
+
+    /* ——— Товчны стиль ——— */
+    button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background-color: #2563eb;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color .2s;
+    }
+    button:hover { background-color: #1d4ed8; }
+
+    /* ——— Popup бүрхүүл (background) ——— */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .3s ease, visibility .3s ease;
+      z-index: 9999;
+    }
+    .overlay.show { opacity: 1; visibility: visible; }
+
+    /* ——— Popup блок ——— */
+    .popup {
+      background: #fff;
+      padding: 24px 28px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.3);
+      text-align: center;
+      min-width: 280px;
+      transform: scale(.8);
+      transition: transform .3s ease;
+      position: relative;
+    }
+    .overlay.show .popup { transform: scale(1); }
+
+    /* ——— Хаах товч ——— */
+    .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #555;
+    }
+    .close-btn:hover { color: #000; }
+
+    /* ——— Popup доторх товчнууд ——— */
+    .popup-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    .popup-buttons button { border-radius: 6px; padding: 8px 16px; }
+    .popup-buttons button.cancel { background: #9ca3af; }
+    .popup-buttons button.cancel:hover { background: #6b7280; }
+  </style>
+</head>
+<body>
+
+  <!-- Гадна талын товч (popup-ийг нээх) -->
+  <button id="RealEstate">Үл хөдлөх</button>
+
+  <!-- Popup Banner -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="popupTitle" aria-describedby="popupMessage">
+    <div class="popup">
+      <button class="close-btn" type="button" aria-label="Хаах" onclick="hidePopup()">×</button>
+      <h2 id="popupTitle">Үл хөдлөх маягт</h2>
+      <p id="popupMessage">Үл хөдлөх товч дарагдлаа!</p>
+      <div class="popup-buttons">
+        <button id="okBtn" type="button">OK</button>
+        <button id="cancelBtn" class="cancel" type="button">Цуцлах</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById("overlay");
+    const popupMessage = document.getElementById("popupMessage");
+    const openBtn = document.getElementById("RealEstate");
+    const okBtn = document.getElementById("okBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+
+    // Popup харуулах
+    function showPopup(message) {
+      if (message) popupMessage.textContent = message;
+      overlay.classList.add("show");
+      // фокусыг popup руу шилжүүлье
+      okBtn.focus();
+    }
+
+    // Popup хаах
+    function hidePopup() {
+      overlay.classList.remove("show");
+      // фокусыг буцаая
+      openBtn.focus();
+    }
+
+    // Товч дарахад popup гаргах
+    openBtn.addEventListener("click", () => {
+      showPopup("Үл хөдлөх товч дарагдлаа!");
+    });
+
+    // Popup доторх товчнууд
+    okBtn.addEventListener("click", () => {
+      alert("OK товч дарагдлаа!");
+      hidePopup();
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      alert("Цуцлагдлаа!");
+      hidePopup();
+    });
+
+    // Popup гадна дарвал хаах
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) hidePopup();
+    });
+
+    // Escape дарвал хаах
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && overlay.classList.contains("show")) {
+        hidePopup();
+      }
+    });
+  </script>
+</body>
+</html>

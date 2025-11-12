@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="mn">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Эхлэл — Зарын фийд</title>
+  <style>
+    body {
+      font-family: system-ui, Arial;
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 12px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      text-decoration: none;
+      color: #000;
+      background: #fff;
+    }
+
+    .card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .meta {
+      padding: 10px;
+    }
+
+    .title {
+      font-weight: 600;
+      font-size: 14px;
+      line-height: 1.3;
+      margin-bottom: 6px;
+      min-height: 36px;
+    }
+
+    .price {
+      font-weight: 700;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h5 style="font-size: 40px;">Монголын үл хөдлөх худалдааны төв сайт</h5>
+    <a href="./index.html">+ Зар оруулах</a>
+  </header>
+  <h1>Шинэ зарууд</h1>
+
+  <div style="text-align:center; margin-top:0; margin-bottom:30px;">
+    <div class="searchBox">
+      <input type="text" placeholder="Юу хайж байгаагаа бичээрэй :) ">
+      <ul id="results"></ul>
+      <img src="https://cdn-icons-png.flaticon.com/512/54/54481.png" alt="search icon">
+    </div>
+  </div>
+
+  <style>
+    .searchBox {
+      position: relative;
+      display: inline-block;
+    }
+
+    .searchBox input {
+      padding: 10px 40px 10px 16px;
+      /* баруун талд логонд зай гаргаж байна */
+      border: 1px solid #c2a98c;
+      /* бор хүрээ */
+      border-radius: 25px;
+      outline: none;
+      font-size: 16px;
+      width: 250px;
+      transition: all 0.3s ease;
+      background: #fffdf9;
+      /* цайвар шаргал фон */
+      color: #5a4632;
+      /* үсгийн өнгө */
+    }
+
+    .searchBox input:hover {
+      border-color: #ffffff;
+      box-shadow: 0 0 8px rgba(250, 250, 250, 0.4);
+      background: #fffaf2;
+    }
+
+    .searchBox input:focus {
+      border-color: #a07245;
+      box-shadow: 0 0 10px rgba(160, 114, 69, 0.45);
+      background: #fff6ec;
+    }
+
+    .searchBox input::placeholder {
+      color: #b59576;
+      transition: color 0.3s ease;
+    }
+
+    .searchBox input:hover::placeholder {
+      color: #a87f55;
+    }
+
+    .searchBox img {
+      position: absolute;
+      right: 14px;
+      /* баруун талд байрлана */
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      opacity: 0.6;
+      pointer-events: none;
+      /* дарахад input-т фокус хадгалагдана */
+      transition: opacity 0.3s ease;
+    }
+
+    .searchBox input:hover+img {
+      opacity: 0.8;
+    }
+  </style>
+
+  <div id="grid" class="grid"></div>
+  <script>
+    const API = "http://localhost:3000";
+    let ALL_ITEMS = [];
+
+    // ✅ Feed татах
+    async function loadFeed() {
+      const res = await fetch(`${API}/api/feed`);
+      const data = await res.json();
+      ALL_ITEMS = data.items;
+
+      renderGrid(ALL_ITEMS);
+    }
+
+    // ✅ Grid зурах функц
+    function renderGrid(list) {
+      const grid = document.getElementById("grid");
+      grid.innerHTML = "";
+
+      list.forEach(it => {
+        const card = document.createElement("a");
+        card.className = "card";
+        card.href = `./listing.html?id=${it.id}`;
+
+        const img = document.createElement("img");
+        img.src = it.cover ? (API + it.cover) : "https://via.placeholder.com/600x400";
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+
+        const title = document.createElement("div");
+        title.className = "title";
+        title.textContent = it.title;
+
+        const price = document.createElement("div");
+        price.className = "price";
+        price.textContent = new Intl.NumberFormat("mn-MN").format(it.price) + " ₮";
+
+        meta.appendChild(title);
+        meta.appendChild(price);
+        card.appendChild(img);
+        card.appendChild(meta);
+        grid.appendChild(card);
+      });
+    }
+
+    // ✅ Хайлтын систем
+    // ✅ 1. Монгол үсэг, латин үсгийг нэг хэлбэрт оруулах
+    function normalize(text) {
+      if (!text) return "";
+      text = text.toLowerCase();
+
+      // ⚡ Эхлээд урт үгсийг орлуулна
+      const longMap = {
+        "өрөө": "uruu",
+        "рөө": "ruu",
+        "өрөө": "oroo",
+        "рөө": "ruu"
+      };
+      for (const [k, v] of Object.entries(longMap)) {
+        text = text.replace(new RegExp(k, "g"), v);
+      }
+
+      // ⚡ Дараа нь ганц үсгүүдийг орлуулна
+      const shortMap = {
+        "ө": "o",
+        "ү": "u",
+        "өө": "oo",
+        "үү": "uu",
+        "б": "b",
+        "р": "r",
+        "й": "i",
+        "и": "i",
+        "з": "z",
+        "ө": "u",
+        "өө": "uu",
+        "й": "i",
+        "з": "z",
+
+      };
+      for (const [k, v] of Object.entries(shortMap)) {
+        text = text.replace(new RegExp(k, "g"), v);
+      }
+
+      // ⚡ Зайг арилгана
+      text = text.replace(/\s+/g, "");
+      return text;
+    }
+
+
+    // ✅ 2. Монгол тоог тоо руу хөрвүүлэх функц
+    function convertMongolNumberWords(str) {
+      const numbers = {
+        "нэг": "1",
+        "хоёр": "2",
+        "гурван": "3",
+        "дөрвөн": "4",
+        "тав": "5",
+        "зургаан": "6",
+        "долоон": "7",
+        "найман": "8",
+        "есөн": "9",
+        "арав": "10",
+      };
+
+      for (const [word, num] of Object.entries(numbers)) {
+        str = str.replace(new RegExp(word, "g"), num);
+      }
+
+      return str;
+    }
+
+    // ✅ 3. Эцсийн хайлтын логик
+    document.querySelector(".searchBox input").addEventListener("input", function () {
+      const raw = this.value.trim().toLowerCase();
+      const q = normalize(convertMongolNumberWords(raw));
+
+      if (!q) {
+        renderGrid(ALL_ITEMS);
+        return;
+      }
+
+      const filtered = ALL_ITEMS.filter(it => {
+        const title = normalize(convertMongolNumberWords(it.title));
+        const desc = normalize(convertMongolNumberWords(it.description || ""));
+        const price = String(it.price);
+        return title.includes(q) || desc.includes(q) || price.includes(q);
+      });
+
+      renderGrid(filtered);
+    });
+
+
+    // ✅ Эхлүүлэх
+    loadFeed();
+  </script>
+
+</body>
+
+</html>

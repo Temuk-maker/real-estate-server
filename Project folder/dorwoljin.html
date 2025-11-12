@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8" />
+  <title>Center Banner Demo</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #f3f4f6;
+    }
+
+    /* ——— Товчны стиль ——— */
+    button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background-color: #2563eb;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color .2s;
+    }
+    button:hover { background-color: #1d4ed8; }
+
+    /* ——— Popup бүрхүүл (background) ——— */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .3s ease, visibility .3s ease;
+      z-index: 9999;
+    }
+
+    /* ——— Popup дөрвөлжин блок ——— */
+    .popup {
+      background: #fff;
+      padding: 24px 28px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      text-align: center;
+      min-width: 260px;
+      transform: scale(0.8);
+      transition: transform .3s ease;
+      position: relative;
+    }
+
+    /* ——— Popup нээгдэхэд ——— */
+    .overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .overlay.show .popup {
+      transform: scale(1);
+    }
+
+    /* ——— Хаах товч ——— */
+    .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #555;
+    }
+    .close-btn:hover { color: #000; }
+  </style>
+</head>
+<body>
+
+  <!-- Товч -->
+  <button id="RealEstate">Үл хөдлөх</button>
+
+  <!-- Popup Banner -->
+  <div id="overlay" class="overlay">
+    <div class="popup">
+      <button class="close-btn" onclick="hidePopup()">×</button>
+      <h3>Мэдэгдэл</h3>
+      <p id="popupMessage">Үл хөдлөх товч дарагдлаа!</p>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById("overlay");
+    const popupMessage = document.getElementById("popupMessage");
+
+    // Товч дарахад popup гаргах
+    document.getElementById("RealEstate").addEventListener("click", () => {
+      showPopup("Үл хөдлөх товч дарагдлаа!");
+    });
+
+    // Popup харуулах функц
+    function showPopup(message) {
+      popupMessage.textContent = message;
+      overlay.classList.add("show");
+    }
+
+    // Popup хаах функц
+    function hidePopup() {
+      overlay.classList.remove("show");
+    }
+
+    // Popup-ны гадна дарвал хаах
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) hidePopup();
+    });
+  </script>
+</body>
+</html>

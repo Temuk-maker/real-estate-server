@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8" />
+  <title>Banner demo</title>
+  <style>
+    /* Banner-ийн үндсэн загвар */
+    .banner {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      transform: translateY(-100%); /* анх нуугдсан */
+      background: #1f2937;          /* харавтар саарал */
+      color: #fff;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.2);
+      transition: transform .3s ease; /* гулсах анимац */
+      z-index: 9999;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .banner.show {
+      transform: translateY(0); /* харагдана */
+    }
+    .banner .msg {
+      font-size: 15px;
+    }
+    .banner .close {
+      position: absolute;
+      right: 10px;
+      top: 8px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    /* Жишээний layout */
+    body { margin: 0; padding: 24px; }
+    button {
+      padding: 10px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: #f3f4f6;
+    }
+    button:hover { background: #e5e7eb; }
+  </style>
+</head>
+<body>
+
+  <!-- Танай товч -->
+  <button id="RealEstate">Үл хөдлөх</button>
+
+  <!-- Banner -->
+  <div id="banner" class="banner" role="status" aria-live="polite">
+    <span class="msg">Үл хөдлөх товч дарагдлаа!</span>
+    <button class="close" aria-label="Хаах" onclick="hideBanner()">×</button>
+  </div>
+
+  <script>
+    // Товч дарахад banner-ийг гаргах
+    document.getElementById('RealEstate').addEventListener('click', () => {
+      showBanner("Яг ямар үл хөдлөх зармаар байна");
+    });
+
+    // Banner-ийг харуулах функц (сонголтоор авто-хаахтай)
+    let bannerTimer = null;
+    function showBanner(message, autoHideMs = 4000) {
+      const b = document.getElementById('banner');
+      b.querySelector('.msg').textContent = message || '';
+      b.classList.add('show');
+
+      // Олон даралтад таймер давхцахаас сэргийлнэ
+      if (bannerTimer) clearTimeout(bannerTimer);
+      if (autoHideMs && autoHideMs > 0) {
+        bannerTimer = setTimeout(() => hideBanner(), autoHideMs);
+      }
+    }
+
+    // Хаах товч дээр дарахад эсвэл таймераар хаах
+    function hideBanner() {
+      document.getElementById('banner').classList.remove('show');
+    }
+  </script>
+</body>
+</html>

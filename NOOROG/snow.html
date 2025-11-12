@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <title>Snow Input</title>
+  <style>
+    body {
+      background: linear-gradient(#6fb7ff, #ffffff);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .snow-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    input {
+      padding: 10px 16px;
+      border: 1px solid #ccc;
+      border-radius: 25px;
+      outline: none;
+      font-size: 16px;
+      width: 250px;
+      text-align: center;
+      z-index: 1;
+      position: relative;
+      background: rgba(255,255,255,0.8);
+    }
+
+    .snowflake {
+      position: absolute;
+      top: -10px;
+      color: white;
+      font-size: 10px;
+      user-select: none;
+      animation: fall linear forwards;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(120px);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="snow-container">
+    <input type="text" placeholder="Хайлт хийх...">
+  </div>
+
+  <script>
+    const container = document.querySelector('.snow-container');
+
+    function createSnow() {
+      const snow = document.createElement('div');
+      snow.classList.add('snowflake');
+      snow.textContent = '❄';
+      snow.style.left = Math.random() * 250 + 'px';
+      snow.style.fontSize = 8 + Math.random() * 8 + 'px';
+      snow.style.animationDuration = 2 + Math.random() * 2 + 's';
+      container.appendChild(snow);
+
+      // унаж дуусаад арилгана
+      setTimeout(() => snow.remove(), 4000);
+    }
+
+    // 200 мс тутамд нэг цасан ширхэг нэмнэ
+    setInterval(createSnow, 200);
+  </script>
+</body>
+</html>

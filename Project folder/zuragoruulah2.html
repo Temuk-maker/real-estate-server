@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <title>ContentEditable дотор зураг insert</title>
+</head>
+<body>
+  <button id="insertImageBtn">Зураг оруулах</button>
+  <input id="filePicker" type="file" accept="image/*" hidden>
+
+  <!-- Энэ хайрцаг руу зураг шууд INSERT болно -->
+  <div id="editor" contenteditable="true" style="min-height:120px; border:1px solid #ccc; padding:8px;">
+    Энд текст бичээд, дараа нь зураг оруулж болно...
+  </div>
+
+  <script>
+    const insertBtn = document.getElementById('insertImageBtn');
+    const picker = document.getElementById('filePicker');
+    const editor = document.getElementById('editor');
+
+    insertBtn.addEventListener('click', () => picker.click());
+
+    picker.addEventListener('change', async () => {
+      const file = picker.files && picker.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert('Зөвхөн зураг сонгоно уу.');
+        picker.value = '';
+        return;
+      }
+
+      // Файлыг base64 болгож <img> болгон editor-т оруулна
+      const dataUrl = await fileToDataURL(file);
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.alt = file.name;
+      img.style.maxWidth = '100%';
+
+      // Карет (cursor)-ын байрлалд зураг оруулах
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        range.insertNode(img);
+        // Зургийн ард зай үүсгэх
+        range.setStartAfter(img);
+        range.setEndAfter(img);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } else {
+        // Хэрэв каретгүй бол төгсгөлд нэмье
+        editor.appendChild(img);
+      }
+
+      picker.value = '';
+    });
+
+    function fileToDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(fr.result);
+        fr.onerror = reject;
+        fr.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+</html>

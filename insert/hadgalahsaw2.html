@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8" />
+  <title>Зар оруулах</title>
+  <style>
+    body { font-family: system-ui, Arial; max-width: 860px; margin: 24px auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 10px; }
+    .thumb { position: relative; border: 1px solid #ddd; border-radius: 8px; padding: 6px; }
+    .thumb img { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; }
+    .thumb button { position: absolute; top: 6px; right: 6px; }
+    label { display:block; margin: 10px 0 4px; }
+    input, textarea { width: 100%; padding: 8px; }
+    .row { display:flex; gap:10px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Шинэ зар оруулах</h1>
+
+  <label>Гарчиг</label>
+  <input id="title" placeholder="Ж: iPhone 13 Pro зарна">
+
+  <label>Үнэ (₮)</label>
+  <input id="price" type="number" min="0" placeholder="Ж: 1500000">
+
+  <label>Тайлбар</label>
+  <textarea id="desc" rows="4" placeholder="Богино тайлбар..."></textarea>
+
+  <div class="row">
+    <button id="pickBtn">Зураг нэмэх</button>
+    <input id="fileInput" type="file" accept="image/*" multiple hidden>
+  </div>
+
+  <div id="imageContainer" class="grid" style="margin-top:10px;"></div>
+
+  <div class="row">
+    <button id="saveDraftBtn">Ноорог хадгалах</button>
+    <button id="publishBtn">Нийтлэх</button>
+  </div>
+
+  <p id="msg"></p>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const pickBtn = document.getElementById('pickBtn');
+    const container = document.getElementById('imageContainer');
+    const saveDraftBtn = document.getElementById('saveDraftBtn');
+    const publishBtn = document.getElementById('publishBtn');
+    const msg = document.getElementById('msg');
+
+    const picked = []; // {file, id, url}
+
+    pickBtn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', () => {
+      const files = fileInput.files;
+      if (!files || files.length === 0) return;
+
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+
+        const id = crypto.randomUUID();
+        const url = URL.createObjectURL(file);
+        picked.push({ file, id, url });
+
+        const card = document.createElement('div');
+        card.className = 'thumb';
+        card.dataset.id = id;
+
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.textContent = '×';
+        del.title = 'Устгах';
+        del.addEventListener('click', () => removeImage(id));
+
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = file.name;
+
+        card.appendChild(del);
+        card.appendChild(img);
+        container.appendChild(card);
+
+        img.onload = () => URL.revokeObjectURL(url);
+      }
+      fileInput.value = '';
+    });
+
+    function removeImage(id) {
+      const idx = picked.findIndex(x => x.id === id);
+      if (idx >= 0) picked.splice(idx, 1);
+      const el = container.querySelector(`.thumb[data-id="${id}"]`);
+      if (el) el.remove();
+    }
+
+    async function submitListing(status) {
+      msg.textContent = '';
+      const title = document.getElementById('title').value.trim();
+      const price = document.getElementById('price').value.trim();
+      const desc = document.getElementById('desc').value.trim();
+
+      if (!title) { msg.textContent = 'Гарчиг шаардлагатай.'; return; }
+      if (!price) { msg.textContent = 'Үнэ оруулна уу.'; return; }
+      if (picked.length === 0) { msg.textContent = 'Дор хаяж 1 зураг оруулна уу.'; return; }
+
+      const fd = new FormData();
+      fd.append('title', title);
+      fd.append('price', price);
+      fd.append('description', desc);
+      fd.append('status', status); // "draft" | "published"
+      for (const {file} of picked) fd.append('images', file);
+
+      try {
+        const res = await fetch('http://localhost:3000/api/listings', {
+          method: 'POST',
+          body: fd
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.message || 'Алдаа');
+        msg.textContent = (status === 'draft') ? 'Ноорог хадгаллаа.' : 'Амжилттай нийтлэв!';
+        // Хүсвэл энд form-аа цэвэрлэж болно
+      } catch (e) {
+        console.error(e);
+        msg.textContent = 'Сервертэй харилцахад алдаа гарлаа.';
+      }
+    }
+
+    saveDraftBtn.addEventListener('click', () => submitListing('draft'));
+    publishBtn.addEventListener('click', () => submitListing('published'));
+  </script>
+</body>
+</html>

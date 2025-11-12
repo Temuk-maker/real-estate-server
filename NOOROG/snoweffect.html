@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <title>Snow Input Effect</title>
+  <style>
+    .snow-input {
+      position: relative;
+      display: inline-block;
+    }
+
+    .snow-input input {
+      width: 250px;
+      padding: 10px 16px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 25px;
+      outline: none;
+      background: rgba(255, 255, 255, 0.95);
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .snowflake {
+      position: absolute;
+      color: white;
+      font-size: 10px;
+      user-select: none;
+      pointer-events: none;
+      animation: fall linear forwards;
+      text-shadow: 0 0 4px rgba(255,255,255,0.8);
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(40px);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body style="display:flex; justify-content:center; align-items:center; height:100vh; background:#8ac6ff;">
+  <div class="snow-input">
+    <input type="text" placeholder="Хайлт хийх...">
+  </div>
+
+  <script>
+    const snowBox = document.querySelector('.snow-input');
+
+    function createSnow() {
+      const flake = document.createElement('div');
+      flake.classList.add('snowflake');
+      flake.textContent = '❄';
+      flake.style.left = Math.random() * 230 + 'px';
+      flake.style.top = '0px';
+      flake.style.fontSize = 8 + Math.random() * 6 + 'px';
+      flake.style.opacity = 0.8 + Math.random() * 0.2;
+      flake.style.animationDuration = 1.5 + Math.random() * 1.5 + 's';
+      snowBox.appendChild(flake);
+
+      // цас унаж дууссаны дараа устгана
+      setTimeout(() => flake.remove(), 3000);
+    }
+
+    setInterval(createSnow, 200); // 200ms тутамд шинэ цасан ширхэг үүснэ
+  </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <title>requestAnimationFrame жишээ</title>
+</head>
+<body>
+  <div id="ball"
+       style="width:50px; height:50px; background:red; border-radius:50%; position:absolute; left:0; top:100px;">
+  </div>
+
+  <script>
+    const ball = document.getElementById("ball");
+    let x = 0; // бөмбөгний одоогийн байрлал (зүүнээс эхэлнэ)
+
+    // хөдөлгөөн хийх функц
+    function move() {
+      x += 3;                 // 3px-ээр баруун тийш шилжүүлнэ
+      ball.style.left = x + "px";
+
+      // 1. Хэрвээ баруун талд хүрээгүй бол дараагийн frame дээр дахин ажиллуул
+      if (x < window.innerWidth - 60) {
+        requestAnimationFrame(move);
+      }
+      // 2. Хэрвээ хүрвэл дуусгана
+      else {
+        console.log("Хөдөлгөөн дууслаа");
+      }
+    }
+
+    // Хөдөлгөөн эхлүүлэх
+    move();
+  </script>
+</body>
+</html>

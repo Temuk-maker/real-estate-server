@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8" />
+  <title>Зар оруулах (Drag & Drop reorder)</title>
+  <style>
+    body { font-family: system-ui, Arial; max-width: 860px; margin: 24px auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 10px; }
+    .thumb {
+      position: relative; border: 1px solid #ddd; border-radius: 8px; padding: 6px;
+      background:#fff;
+    }
+    .thumb img { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; display:block; }
+    .thumb button { position: absolute; top: 6px; right: 6px; }
+    .thumb .badge { 
+      position: absolute; left: 6px; top: 6px; 
+      background: #111; color:#fff; font-size: 12px; padding: 2px 6px; border-radius: 999px;
+      opacity:.85;
+    }
+    .thumb.dragging { opacity: .5; }
+    .thumb.drop-target { outline: 2px dashed #3b82f6; }
+    label { display:block; margin: 10px 0 4px; }
+    input, textarea { width: 100%; padding: 8px; }
+    .row { display:flex; gap:10px; margin-top: 12px; }
+    .hint { font-size: 12px; color: #555; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>Шинэ зар оруулах</h1>
+
+  <label>Гарчиг</label>
+  <input id="title" placeholder="Ж: iPhone 13 Pro зарна">
+
+  <label>Үнэ (₮)</label>
+  <input id="price" type="number" min="0" placeholder="Ж: 1500000">
+
+  <label>Тайлбар</label>
+  <textarea id="desc" rows="4" placeholder="Богино тайлбар..."></textarea>
+
+  <div class="row">
+    <button id="pickBtn">Зураг нэмэх</button>
+    <input id="fileInput" type="file" accept="image/*" multiple hidden>
+  </div>
+
+  <div class="hint">📌 Зурагнуудаа **чирч зөөж** дарааллыг өөрчилнө. Эхний зураг — <b>cover</b>.</div>
+  <div id="imageContainer" class="grid" aria-label="Зургийн жагсаалт (чирж зөөж болно)"></div>
+
+  <div class="row">
+    <button id="saveDraftBtn">Ноорог хадгалах</button>
+    <button id="publishBtn">Нийтлэх</button>
+  </div>
+
+  <p id="msg"></p>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const pickBtn = document.getElementById('pickBtn');
+    const container = document.getElementById('imageContainer');
+    const saveDraftBtn = document.getElementById('saveDraftBtn');
+    const publishBtn = document.getElementById('publishBtn');
+    const msg = document.getElementById('msg');
+
+    // Доторх жагсаалт — file объект хадгалахгүй. Файл нь card.dataset.fileIndex-р дамжина.
+    /** @type {File[]} */
+    let filesPool = []; // бүх сонгосон файлууд энд цугларна
+    let dragSrcEl = null;
+
+    pickBtn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', () => {
+      const files = fileInput.files;
+      if (!files || files.length === 0) return;
+
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        const poolIndex = filesPool.push(file) - 1; // push хийсний дараах index
+        addThumb(poolIndex, file);
+      }
+      refreshBadges();
+      fileInput.value = '';
+    });
+
+    function addThumb(poolIndex, file) {
+      const url = URL.createObjectURL(file);
+
+      const card = document.createElement('div');
+      card.className = 'thumb';
+      card.setAttribute('draggable', 'true');
+      card.dataset.fileIndex = String(poolIndex);
+
+      const badge = document.createElement('div');
+      badge.className = 'badge';
+      badge.textContent = '#';
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.textContent = '×';
+      del.title = 'Устгах';
+      del.addEventListener('click', () => removeThumb(card));
+
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = file.name;
+      img.onload = () => URL.revokeObjectURL(url);
+
+      // Drag events
+      card.addEventListener('dragstart', onDragStart);
+      card.addEventListener('dragover', onDragOver);
+      card.addEventListener('dragleave', onDragLeave);
+      card.addEventListener('drop', onDrop);
+      card.addEventListener('dragend', onDragEnd);
+
+      card.appendChild(badge);
+      card.appendChild(del);
+      card.appendChild(img);
+      container.appendChild(card);
+    }
+
+    function removeThumb(card) {
+      card.remove();
+      refreshBadges();
+    }
+
+    function refreshBadges() {
+      // Cover = эхний зураг. Badge-уудаа 1..n гэж шинэчилнэ.
+      [...container.children].forEach((el, i) => {
+        const b = el.querySelector('.badge');
+        if (b) b.textContent = i === 0 ? 'Cover' : String(i + 1);
+      });
+    }
+
+    // ---- Drag & Drop ----
+    function onDragStart(e) {
+      dragSrcEl = this;
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      // Firefox шаарддаг
+      e.dataTransfer.setData('text/plain', this.dataset.fileIndex || '');
+    }
+
+    function onDragOver(e) {
+      e.preventDefault(); // drop боломжтой болгоно
+      if (this === dragSrcEl) return;
+      this.classList.add('drop-target');
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function onDragLeave() {
+      this.classList.remove('drop-target');
+    }
+
+    function onDrop(e) {
+      e.preventDefault();
+      this.classList.remove('drop-target');
+      if (!dragSrcEl || dragSrcEl === this) return;
+
+      // DOM дотор байршлыг солино
+      const nodes = [...container.children];
+      const srcIndex = nodes.indexOf(dragSrcEl);
+      const targetIndex = nodes.indexOf(this);
+
+      if (srcIndex < 0 || targetIndex < 0) return;
+
+      if (srcIndex < targetIndex) {
+        container.insertBefore(dragSrcEl, this.nextSibling);
+      } else {
+        container.insertBefore(dragSrcEl, this);
+      }
+      refreshBadges();
+    }
+
+    function onDragEnd() {
+      this.classList.remove('dragging');
+      [...container.children].forEach(el => el.classList.remove('drop-target'));
+    }
+
+    // ---- Илгээх ----
+    async function submitListing(status) {
+      msg.textContent = '';
+      const title = document.getElementById('title').value.trim();
+      const price = document.getElementById('price').value.trim();
+      const desc = document.getElementById('desc').value.trim();
+
+      if (!title) { msg.textContent = 'Гарчиг шаардлагатай.'; return; }
+      if (!price) { msg.textContent = 'Үнэ оруулна уу.'; return; }
+      if (container.children.length === 0) { msg.textContent = 'Дор хаяж 1 зураг оруулна уу.'; return; }
+
+      const fd = new FormData();
+      fd.append('title', title);
+      fd.append('price', price);
+      fd.append('description', desc);
+      fd.append('status', status); // "draft" | "published"
+
+      // ОДООХ ДАРААЛЛЫН ДАГУУ ФАЙЛУУДЫГ НЬ НЭМНЭ
+      for (const card of [...container.children]) {
+        const idx = Number(card.dataset.fileIndex);
+        const file = filesPool[idx];
+        if (file) fd.append('images', file);
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/api/listings', {
+          method: 'POST',
+          body: fd
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.message || 'Алдаа');
+        msg.textContent = (status === 'draft') ? 'Ноорог хадгаллаа.' : 'Амжилттай нийтлэв! (Cover бол эхний зураг)';
+      } catch (e) {
+        console.error(e);
+        msg.textContent = 'Сервертэй харилцахад алдаа гарлаа.';
+      }
+    }
+
+    document.getElementById('saveDraftBtn').addEventListener('click', () => submitListing('draft'));
+    document.getElementById('publishBtn').addEventListener('click', () => submitListing('published'));
+  </script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <title>Олон зураг оруулах + Хадгалах</title>
+  <style>
+    #imageContainer { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; margin-top: 12px; }
+    .thumb { position: relative; border: 1px solid #ddd; padding: 6px; border-radius: 8px; }
+    .thumb img { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; display:block; }
+    .thumb .name { font-size: 12px; margin-top: 4px; word-break: break-all; }
+    .thumb button { position: absolute; top: 6px; right: 6px; }
+    #actions { margin-top: 12px; display: flex; gap: 8px; }
+    #modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: none; align-items: center; justify-content: center;
+    }
+    #modal .box {
+      background: #fff; padding: 16px; border-radius: 10px; width: 360px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    #modal .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+    .hint { font-size: 12px; color: #555; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <button id="addImageBtn">Зураг нэмэх</button>
+  <button id="saveBtn">OK / Хадгалах</button>
+  <div class="hint">💡 Та олон зураг сонгож болно. Устгах бол зураг дээрх × дарна.</div>
+
+  <input id="fileInput" type="file" accept="image/*" multiple hidden>
+
+  <div id="imageContainer"></div>
+
+  <!-- Баталгаажуулах модал -->
+  <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="box">
+      <h3 id="modalTitle">Хадгалах сонголтоо сонгоно уу</h3>
+      <p>1) Фолдер сонгож шууд файлуудаа хадгалах (шинэ Chrome/Edge дээр ажиллана).<br>
+      2) Нэг HTML файлд (gallery.html) шингээгээд татаж авах.</p>
+      <div class="row">
+        <button id="cancelModal">Болих</button>
+        <button id="saveAsHtml">HTML болгон татах</button>
+        <button id="saveToFolder">Фолдер руу бичих</button>
+      </div>
+      <div class="hint">*Фолдер руу бичих нь зөвхөн File System Access API дэмждэг хөтөчид ажиллана.</div>
+    </div>
+  </div>
+
+  <script>
+    const addBtn = document.getElementById('addImageBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const fileInput = document.getElementById('fileInput');
+    const container = document.getElementById('imageContainer');
+
+    // Дотоод сан: хэрэглэгчийн сонгосон файлуудыг энд хадгална
+    /** @type {Array<{file: File, url: string, id: string}>} */
+    const picked = [];
+
+    // Товч → файл сонгох цонх
+    addBtn.addEventListener('click', () => fileInput.click());
+
+    // Файл сонгогдоход олон зураг нэмэх
+    fileInput.addEventListener('change', () => {
+      const files = fileInput.files;
+      if (!files || files.length === 0) return;
+
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+
+        const url = URL.createObjectURL(file);
+        const id = crypto.randomUUID();
+        picked.push({ file, url, id });
+
+        // UI-д thumbnail нэмэх
+        const card = document.createElement('div');
+        card.className = 'thumb';
+        card.dataset.id = id;
+
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.textContent = '×';
+        del.title = 'Устгах';
+        del.addEventListener('click', () => removeImage(id));
+
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = file.name;
+
+        const name = document.createElement('div');
+        name.className = 'name';
+        name.textContent = file.name;
+
+        card.appendChild(del);
+        card.appendChild(img);
+        card.appendChild(name);
+        container.appendChild(card);
+
+        img.onload = () => URL.revokeObjectURL(url); // preview url-ээ чөлөөлнө
+      }
+
+      // дараагийн удаа change ажиллахын тулд цэвэрлэнэ
+      fileInput.value = '';
+    });
+
+    function removeImage(id) {
+      const idx = picked.findIndex(x => x.id === id);
+      if (idx >= 0) {
+        picked.splice(idx, 1);
+      }
+      const el = container.querySelector(`.thumb[data-id="${id}"]`);
+      if (el) el.remove();
+    }
+
+    // ----- ХАДГАЛАХ УТГУУД -----
+    const modal = document.getElementById('modal');
+    const cancelModal = document.getElementById('cancelModal');
+    const saveAsHtml = document.getElementById('saveAsHtml');
+    const saveToFolder = document.getElementById('saveToFolder');
+
+    saveBtn.addEventListener('click', () => {
+      if (picked.length === 0) {
+        alert('Эхлээд дор хаяж 1 зураг нэмнэ үү.');
+        return;
+      }
+      openModal();
+    });
+
+    cancelModal.addEventListener('click', closeModal);
+    function openModal() { modal.style.display = 'flex'; }
+    function closeModal() { modal.style.display = 'none'; }
+
+    // 1) Нэг HTML файл болгон татах (fallback)
+    saveAsHtml.addEventListener('click', async () => {
+      try {
+        const html = await buildGalleryHTML(picked.map(p => p.file));
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'gallery.html';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        closeModal();
+      } catch (e) {
+        console.error(e);
+        alert('HTML үүсгэхэд алдаа гарлаа.');
+      }
+    });
+
+    // 2) Фолдер руу шууд бичих (шинэ Chrome/Edge)
+    saveToFolder.addEventListener('click', async () => {
+      if (!('showDirectoryPicker' in window)) {
+        alert('Таны хөтөч фолдер руу шууд бичихийг дэмжихгүй байна. "HTML болгон татах"-г ашиглана уу.');
+        return;
+      }
+      try {
+        const dir = await window.showDirectoryPicker({ mode: 'readwrite' });
+        // Файлуудыг тухайн нэрээр нь бичнэ. Давхцвал дээр нь бичихийг асууна.
+        for (const { file } of picked) {
+          const fileHandle = await dir.getFileHandle(file.name, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(file);
+          await writable.close();
+        }
+        closeModal();
+        alert('Амжилттай хадгаллаа!');
+      } catch (e) {
+        if (e?.name !== 'AbortError') {
+          console.error(e);
+          alert('Хадгалах явцад алдаа гарлаа.');
+        }
+      }
+    });
+
+    // Файлыг data URL болгоод нэг HTML-д шингээх
+    async function buildGalleryHTML(files) {
+      const items = [];
+      for (const f of files) {
+        const dataUrl = await fileToDataURL(f);
+        items.push({ name: f.name, dataUrl });
+      }
+      // Энгийн responsive grid бүхий HTML
+      return `
+<!DOCTYPE html>
+<html lang="mn">
+<meta charset="UTF-8">
+<title>Gallery (saved)</title>
+<style>
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 16px; }
+  h1 { font-size: 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 12px; }
+  figure { margin:0; border:1px solid #ddd; border-radius:8px; padding:8px; }
+  img { width:100%; height:180px; object-fit:cover; border-radius:6px; display:block; }
+  figcaption { font-size:12px; margin-top:6px; word-break: break-all; color:#444; }
+</style>
+<h1>Зургийн цомог (${items.length} файл)</h1>
+<div class="grid">
+${items.map(it => `
+  <figure>
+    <img src="${it.dataUrl}" alt="${escapeHtml(it.name)}">
+    <figcaption>${escapeHtml(it.name)}</figcaption>
+  </figure>
+`).join('')}
+</div>
+</html>`;
+    }
+
+    function fileToDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(reader.error);
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, ch => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[ch]));
+    }
+  </script>
+</body>
+</html>

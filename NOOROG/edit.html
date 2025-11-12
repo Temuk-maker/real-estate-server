@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head><meta charset="UTF-8"><title>Зар засах</title></head>
+<body>
+  <h2>Зар засах</h2>
+  <input id="title" placeholder="Гарчиг"><br>
+  <input id="price" type="number" placeholder="Үнэ"><br>
+  <textarea id="desc" placeholder="Тайлбар"></textarea><br>
+  <button id="save">Хадгалах</button>
+  <button id="delete">Устгах</button>
+
+  <script>
+    const API = "http://localhost:3000";
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+    const token = params.get("token");
+
+    document.getElementById("save").onclick = async () => {
+      const body = {
+        title: document.getElementById("title").value,
+        price: document.getElementById("price").value,
+        description: document.getElementById("desc").value,
+      };
+      const res = await fetch(`${API}/api/listings/${id}?token=${token}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      alert(data.ok ? "Амжилттай хадгаллаа!" : data.message);
+    };
+
+    document.getElementById("delete").onclick = async () => {
+      if (!confirm("Устгах уу?")) return;
+      const res = await fetch(`${API}/api/listings/${id}?token=${token}`, { method: "DELETE" });
+      const data = await res.json();
+      alert(data.ok ? "Устгалаа" : data.message);
+    };
+  </script>
+</body>
+</html>

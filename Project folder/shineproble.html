@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="mn">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Зөвхөн "Үл хөдлөх" товчны энгийн popup</title>
+</head>
+
+<body>
+    <button id="real-estate">Үл хөдлөх</button>
+
+    <!-- Энгийн popup бүрхүүл (CSS багатай) -->
+    <div id="overlay"
+        style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.4);">
+        <div id="popup" role="dialog" aria-modal="true" tabindex="-1"
+            style="background:#fff; padding:16px; border-radius:8px; min-width:260px; text-align:center;">
+            <div style="display:flex; justify-content:flex-end;">
+                <button id="closeBtn" aria-label="Хаах"
+                    style="background:none; border:none; font-size:20px; cursor:pointer;">×</button>
+            </div>
+            <h3 style="margin:0 0 8px;">Орон сууц</h3>
+            <p style="margin:0;">Үл хөдлөх товч дарлаа.</p>
+            <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
+                <button id="okBtn">OK</button>
+                <button id="cancelBtn">Болих</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ul hodloh gdeg tovchoo barij awna
+        const openBtn = document.getElementById('real-estate');
+
+        // tusdaa baigaa div pop iig barij awna
+        const overlay = document.getElementById('overlay');
+
+        const popup = document.getElementById('popup');
+        const closeBtn = document.getElementById('closeBtn');
+        const okBtn = document.getElementById('okBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        function showPopup() {
+            overlay.style.display = 'flex';
+            // Фокусыг popup руу өгөх
+            requestAnimationFrame(() => popup.focus());
+            document.addEventListener('keydown', onEsc);
+        }
+
+        function hidePopup() {
+            overlay.style.display = 'none';
+            document.removeEventListener('keydown', onEsc);
+            openBtn.focus();
+        }
+
+        function onEsc(e) { if (e.key === 'Escape') hidePopup(); }
+
+        // Зөвхөн "Үл хөдлөх" товч дээр нээх
+        openBtn.addEventListener('click', showPopup);
+
+        // Хаах товчнууд
+        closeBtn.addEventListener('click', hidePopup);
+        cancelBtn.addEventListener('click', hidePopup);
+        okBtn.addEventListener('click', () => { alert('OK'); hidePopup(); });
+
+        // Бүрхүүлийн хоосон хэсэг дээр дарвал хаах
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) hidePopup(); });
+    </script>
+</body>
+
+</html>

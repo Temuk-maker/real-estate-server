@@ -1,0 +1,20 @@
+<!-- Popup box -->
+
+
+<div id="popup" style="display:none; position:fixed; top:50%; left:50%;
+ transform:translate(-50%, -50%); background:white; padding:20px; border-radius:8px;">
+  <p>Амжилттай бүртгэгдлээ! 🎉</p>
+  <button onclick="closePopup()">Хаах</button>
+</div>
+
+<!-- Buttons -->
+<button onclick="showPopup()">Popup гаргах</button>
+
+<script>
+function showPopup() {
+  document.getElementById("popup").style.display = "block";
+}
+function closePopup() {
+  document.getElementById("popup").style.display = "none";
+}
+</script>

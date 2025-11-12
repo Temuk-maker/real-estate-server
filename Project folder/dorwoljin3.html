@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Үл хөдлөх товчны туршилт</title>
+</head>
+<body>
+  <h2>Туршилтын хуудас</h2>
+
+  <button id="RealEstate">Үл хөдлөх</button>
+
+  <script>
+    document.getElementById("RealEstate").addEventListener("click", () => {
+      const ok = confirm("Үл хөдлөх товч дарагдлаа! Үргэлжлүүлэх үү?");
+      if (ok) {
+        // OK дарсан үед хийх зүйл
+        alert("OK дарлаа");
+        // Хэрвээ хүсвэл шинэ хуудас руу шилжүүлж болно:
+        // location.href = "realestate.html";
+      } else {
+        // Цуцлах дарсан үед
+        alert("Цуцлагдлаа");
+      }
+    });
+  </script>
+</body>
+</html>

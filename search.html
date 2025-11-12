@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Энгийн хайлтын систем — Demo</title>
+<style>
+  :root{
+    --bg:#faf7f2;
+    --card:#fff;
+    --ink:#2b211a;
+    --muted:#6e5c52;
+    --brand:#9b6b43;     /* дулаан бор */
+    --brand-2:#c28c5b;   /* арай цайвар бор */
+    --ring: rgba(155,107,67,.35);
+    --chip:#f0e6db;
+  }
+  html,body{height:100%}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    color:var(--ink); background:linear-gradient(180deg,var(--bg),#fff);
+  }
+  .wrap{
+    max-width:920px; margin:36px auto; padding:0 16px;
+  }
+  h1{
+    font-weight:800; letter-spacing:.2px; margin:4px 0 18px;
+  }
+  .searchbox{
+    position:relative; display:flex; align-items:center;
+    background:var(--card); border:1px solid #e7dfd6;
+    border-radius:14px; padding:10px 14px; box-shadow:0 6px 24px rgba(0,0,0,.05);
+    transition:.2s ease; outline:0;
+  }
+  .searchbox:focus-within{ box-shadow:0 8px 28px rgba(155,107,67,.18); border-color:var(--brand-2) }
+  .icon{
+    width:22px; height:22px; margin-right:10px; flex:0 0 22px; opacity:.8
+  }
+  .q{
+    border:0; outline:0; background:transparent; width:100%;
+    font-size:16px; line-height:22px; color:var(--ink);
+  }
+  .q::placeholder{ color:#a09085 }
+  .clear{
+    border:0; background:#f4ece3; color:var(--muted);
+    padding:6px 10px; border-radius:10px; cursor:pointer; margin-left:8px; font-size:12px;
+  }
+  .clear:hover{ background:#eee1d5 }
+  .results{
+    margin-top:16px;
+  }
+  .card{
+    background:var(--card); border:1px solid #eee1d7; border-radius:14px;
+    padding:16px 16px; margin:10px 0; transition:transform .06s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .card:hover{ transform:translateY(-1px); border-color:#e0d1c4; box-shadow:0 10px 26px rgba(0,0,0,.06) }
+  .title{
+    font-weight:700; font-size:18px; margin:0 0 6px;
+  }
+  .title a{ color:var(--brand); text-decoration:none }
+  .title a:hover{ text-decoration:underline }
+  .snippet{ color:#4a3c33; line-height:1.5 }
+  mark{
+    background: linear-gradient(transparent 30%, rgba(194,140,91,.35) 30%);
+    color:inherit; padding:0 .5px; border-radius:4px;
+  }
+  .tags{ margin-top:10px; display:flex; flex-wrap:wrap; gap:8px }
+  .tag{
+    font-size:12px; background:var(--chip); color:#5b4a40; padding:4px 8px; border-radius:999px; border:1px solid #e8dbc9;
+  }
+  .meta{
+    font-size:12px; color:#7a685f; margin-top:6px;
+  }
+  .muted{ color:#827268 }
+  .count{ font-size:13px; color:#6b5a51; margin:12px 2px 4px }
+  /* Keyboard selection */
+  .card[aria-selected="true"]{
+    outline:2px solid var(--ring); box-shadow:0 0 0 4px var(--ring);
+  }
+
+  /* Helper UI */
+  .help{
+    margin-top:14px; font-size:13px; color:#6e5c52;
+  }
+  .empty{
+    text-align:center; color:#7f6e65; padding:28px; border:1px dashed #e4d6c8; border-radius:14px; background:#fff;
+  }
+
+  /* Small */
+  @media (max-width:560px){
+    .title{ font-size:16px}
+    .snippet{ font-size:14px}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Санхүүгийн толь бичиг</h1>
+
+    <div class="searchbox" role="search">
+      <!-- simple SVG лого -->
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" stroke="currentColor" fill="none" stroke-width="2"/>
+        <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input id="q" class="q" type="search" placeholder="Юу хайх вэ... (ж: татварын тайлан)" autocomplete="off" />
+      <button class="clear" id="clearBtn" title="Цэвэрлэх">Clear</button>
+    </div>
+
+    <div class="help">Зөвлөмж: Олон үг бичвэл <span class="muted">бүгдийг</span> нь тааруулж хайна. ↑/↓ сум ашиглан сонгоод Enter дарж нээнэ.</div>
+
+    <div id="count" class="count"></div>
+    <div id="results" class="results" role="listbox" aria-label="Хайлтын үр дүн"></div>
+  </div>
+
+<script>
+/* ---------------------- ЖИШЭЭ ӨГӨГДӨЛ ---------------------- */
+/* title, url, tags, content талбарыг өөрийнхөө өгөгдлөөр солино. */
+const DATA = [
+  { id:1,
+    title: "Нэмэгдэл өртөг (Value Added) тайлбар",
+    url: "#vat",
+    tags: ["санхүү", "тайлбар", "жишээ"],
+    content: "Нэмэгдэл өртөг нь үйлдвэрлэл ба үйлчилгээний үе шат бүрт шинээр бий болсон өгөөжийг илэрхийлнэ. Тооцоолохдоо гаралтын үнэ ба оролтын өртгийн зөрүүг ашиглана."
+  },
+  { id:2,
+    title: "Нийлмэл хүүгийн тооцоо (Compound Interest)",
+    url: "#compound",
+    tags: ["математикийн санхүү", "жишээ", "томьёо"],
+    content: "A = P × (1 + r/n)^(n×t) томьёог ашиглана. Жилийн хүүг сар бүр тооцвол n=12. Жишээ бодлогууд энд бий."
+  },
+  { id:3,
+    title: "MT5 дээр Фибоначчи түвшин ашиглах",
+    url: "#mt5-fibo",
+    tags: ["арилжаа", "техникийн шинжилгээ"],
+    content: "1.618 алтлаг харьцаа нь үнийн сунгалтын боломжит зорилт болдог. Мөн 0.618, 0.382 зэрэг буцах түвшнүүд чухал."
+  },
+  { id:4,
+    title: "Жижиг вэб апп: зургийг урьдчилан харах",
+    url: "#js-preview",
+    tags: ["javascript", "frontend"],
+    content: "File input ашиглан зураг сонгоод URL.createObjectURL-аар урьдчилан харуулна. Аюулгүй байдлаар URL-ийг сүүлд release хийх хэрэгтэй."
+  },
+  { id:5,
+    title: "Менежментийн бүртгэл ба бодлого",
+    url: "#cma327",
+    tags: ["удирдлагын бүртгэл", "өртөг", "жишээ бодлого"],
+    content: "Тогтмол ба хувьсах зардлыг ялгаж, хувь нэмэрт ашгийн дүнгээр шийдвэр гаргана. Break-even тооцоо, CVP шинжилгээ."
+  }
+];
+
+/* ---------------------- ТУСЛАХ ФУНКЦ ---------------------- */
+// Юникод-н энгийн normalize + жижигрүүлэх + диакритик арилгах
+const normalize = (s) => s
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g,'')
+  .replace(/\s+/g,' ')
+  .trim();
+
+// Үгийг салгах (хамгийн энгийн)
+const tokenize = (s) => normalize(s).split(' ').filter(Boolean);
+
+// Фаззи төстэй тааруулалт (Levenshtein биш, гэхдээ багц хүлцэлтэй: startsWith/includes)
+function termMatchScore(text, term){
+  if (!term) return 0;
+  if (text === term) return 3;
+  if (text.startsWith(term)) return 2.2;
+  if (text.includes(term)) return 1.4;
+  return 0;
+}
+
+// Илрэц оноо: гарчиг > tag > агуулга
+function scoreDoc(doc, terms){
+  const title = normalize(doc.title);
+  const content = normalize(doc.content);
+  const tags = (doc.tags||[]).map(normalize);
+
+  let score = 0, matchedPositions = []; // highlighting-д ашиглана
+
+  for (const t of terms){
+    // бүх талбарт заавал таарах ёстой
+    const inAny = title.includes(t) || content.includes(t) || tags.some(tag => tag.includes(t));
+    if (!inAny) return {score:0, matchedPositions:[]};
+
+    // оноо
+    score += termMatchScore(title, t) * 3.5;
+    if (tags.length){
+      score += tags.reduce((acc, tg)=> acc + termMatchScore(tg, t)*2.2, 0);
+    }
+    score += termMatchScore(content, t) * 1.2;
+
+    // гарчиг доторх байрлалыг хадгалъя (highlight-д)
+    let idx = 0;
+    while ((idx = title.indexOf(t, idx)) !== -1){
+      matchedPositions.push([idx, idx+t.length]);
+      idx += t.length;
+    }
+  }
+  return {score, matchedPositions};
+}
+
+// Гарчиг болон тайлбар хэсгийг тэмдэглэх (highlight)
+function highlight(text, terms){
+  let out = text;
+  for (const t of terms){
+    if (!t) continue;
+    const re = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    out = out.replace(re, '<mark>$1</mark>');
+  }
+  return out;
+}
+
+// Тайлбар хэсгийг товчлов
+function snippet(content, terms, len=180){
+  const text = content;
+  const ntext = normalize(text);
+  let pos = Infinity;
+  for (const t of terms){
+    const p = ntext.indexOf(t);
+    if (p !== -1 && p < pos) pos = p;
+  }
+  if (pos === Infinity) pos = 0;
+  const start = Math.max(0, pos - 28);
+  const end = Math.min(text.length, start + len);
+  const chunk = text.slice(start, end);
+  return (start>0?'…':'') + highlight(chunk, terms) + (end<text.length?'…':'');
+}
+
+/* ---------------------- ХАЙЛТЫН ЦӨМ ---------------------- */
+const INDEX = DATA.map(d => ({
+  ...d,
+  _title: normalize(d.title),
+  _content: normalize(d.content),
+  _tags: (d.tags||[]).map(normalize),
+}));
+
+function search(query){
+  const terms = tokenize(query);
+  if (!terms.length) return [];
+  const scored = INDEX.map(d => {
+    const {score} = scoreDoc(d, terms);
+    return {doc:d, score};
+  }).filter(x => x.score>0);
+
+  // Оноо ↓, дараа нь гарчиг урт, дараа нь id ↑
+  scored.sort((a,b) => b.score - a.score || a.doc.title.length - b.doc.title.length || a.doc.id - b.doc.id);
+  return {terms, results: scored.map(s=>s.doc)};
+}
+
+/* ---------------------- UI ---------------------- */
+const q = document.getElementById('q');
+const resultsEl = document.getElementById('results');
+const countEl = document.getElementById('count');
+const clearBtn = document.getElementById('clearBtn');
+
+let selectionIndex = -1; // keyboard сонголт
+let lastTerms = [];
+
+// Debounce
+function debounce(fn, ms=160){
+  let t; return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), ms); };
+}
+
+function renderList(query){
+  const {terms, results} = search(query);
+  lastTerms = terms;
+  selectionIndex = -1;
+
+  resultsEl.innerHTML = '';
+  if (!results.length){
+    countEl.textContent = query.trim() ? 'Илэрц олдсонгүй.' : '';
+    resultsEl.innerHTML = query.trim() ? `<div class="empty">Таны хайсан зүйл олдсонгүй. Илүү тодорхой үгс ашиглаад үзээрэй.</div>` : '';
+    return;
+  }
+  countEl.textContent = `${results.length} илэрц`;
+
+  const frag = document.createDocumentFragment();
+  results.forEach((d, i)=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.role = "option";
+    card.dataset.index = i;
+
+    const title = document.createElement('h3');
+    title.className = 'title';
+    title.innerHTML = `<a href="${d.url}" tabindex="-1">${highlight(d.title, terms)}</a>`;
+
+    const sn = document.createElement('div');
+    sn.className = 'snippet';
+    sn.innerHTML = snippet(d.content, terms);
+
+    const tags = document.createElement('div');
+    tags.className = 'tags';
+    (d.tags||[]).forEach(t=>{
+      const el = document.createElement('span');
+      el.className = 'tag';
+      el.textContent = t;
+      tags.appendChild(el);
+    });
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = d.url.startsWith('#') ? 'Дотоод холбоос' : new URL(d.url, location.href).hostname;
+
+    card.appendChild(title);
+    card.appendChild(sn);
+    if ((d.tags||[]).length) card.appendChild(tags);
+    card.appendChild(meta);
+    frag.appendChild(card);
+  });
+  resultsEl.appendChild(frag);
+}
+
+const onInput = debounce((e)=>{
+  const query = e.target.value;
+  if (!query.trim()){
+    resultsEl.innerHTML = '';
+    countEl.textContent = '';
+    return;
+  }
+  renderList(query);
+}, 80);
+
+q.addEventListener('input', onInput);
+
+// Цэвэрлэх
+clearBtn.addEventListener('click', ()=>{
+  q.value = '';
+  q.focus();
+  resultsEl.innerHTML = '';
+  countEl.textContent = '';
+});
+
+// Клавиатурын навигаци
+document.addEventListener('keydown', (e)=>{
+  const cards = Array.from(document.querySelectorAll('.card'));
+  if (!cards.length) return;
+
+  if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)){
+    e.preventDefault();
+    selectionIndex = Math.min(cards.length-1, selectionIndex+1);
+    updateSelection(cards);
+  } else if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey)){
+    e.preventDefault();
+    selectionIndex = Math.max(0, selectionIndex-1);
+    updateSelection(cards);
+  } else if (e.key === 'Enter' && selectionIndex>=0){
+    e.preventDefault();
+    const a = cards[selectionIndex].querySelector('a');
+    if (a) a.click();
+  }
+});
+
+function updateSelection(cards){
+  cards.forEach((el, i)=>{
+    const sel = i===selectionIndex;
+    el.setAttribute('aria-selected', sel ? 'true' : 'false');
+    if (sel) el.scrollIntoView({block:'nearest', behavior:'smooth'});
+  });
+}
+
+// Анхдагч: юу ч бичээгүй үед багахан тусламж
+q.addEventListener('focus', ()=>{
+  if (!q.value.trim()){
+    countEl.textContent = '';
+    resultsEl.innerHTML = `<div class="empty">Дээшхи талбарт хайх үгээ бичээд туршаад үзээрэй. Жишээ нь: <b>фибоначчи</b>, <b>хадгаламж</b>.</div>`;
+  }
+});
+
+// Хуудас ачааллахад курсор бэлэн
+window.addEventListener('DOMContentLoaded', ()=>{
+  q.focus({preventScroll:true});
+});
+</script>
+</body>
+</html>

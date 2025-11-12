@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <title>Олон зураг оруулах</title>
+</head>
+<body>
+  <button id="addImageBtn">Зураг нэмэх</button>
+  
+  <!-- ✔ multiple нэмэгдсэн -->
+  <input id="fileInput" type="file" accept="image/*" multiple hidden>
+
+  <div id="imageContainer"></div>
+
+  <script>
+    const addBtn = document.getElementById('addImageBtn');
+    const fileInput = document.getElementById('fileInput');
+    const container = document.getElementById('imageContainer');
+
+    // Товч → файл сонгох цонх
+    addBtn.addEventListener('click', () => fileInput.click());
+
+    // Олон зураг оруулах
+    fileInput.addEventListener('change', () => {
+      const files = fileInput.files;
+      if (!files) return;
+
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+
+        const url = URL.createObjectURL(file);
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = file.name;
+        img.width = 300;
+        
+        container.appendChild(img);
+
+        img.onload = () => URL.revokeObjectURL(url);
+      }
+
+      fileInput.value = '';
+    });
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <button id="Insert"> Зар нэмэх</button>
+    <input id="fileInput" type="file" accept="image/*" multiple hidden>
+
+</body>
+
+<script>
+    const addBtn = document.getElementById('Insert')
+    const Fileinput = document.getElementById('fileInput')
+    addBtn.addEventListener('click', () => fileInput.click());
+
+</script>
+
+</html>

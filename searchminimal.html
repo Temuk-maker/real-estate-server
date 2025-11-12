@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<input id="search" placeholder="Хайх..." />
+
+<ul id="results"></ul>
+
+<script>
+const DATA = [
+  { title: "Нэмэгдэл өртөг гэж юу вэ", content: "Үйлдвэрлэлд бий болсон нэмэлт өгөөж." },
+  { title: "Нийлмэл хүү", content: "Compound interest томьёо." },
+  { title: "MT5 Fibonacci", content: "1.618 түвшин." }
+];
+
+document.getElementById("search").addEventListener("input", function () {
+  const q = this.value.toLowerCase();
+  const out = document.getElementById("results");
+  out.innerHTML = "";
+
+  if (!q) return;
+
+  DATA.forEach(item => {
+    const text = (item.title + item.content).toLowerCase();
+    if (text.includes(q)) {
+      const li = document.createElement("li");
+      li.textContent = item.title;
+      out.appendChild(li);
+    }
+  });
+});
+</script>
+
+</body>
+</html>

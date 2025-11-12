@@ -1,0 +1,18 @@
+<!-- Popup box -->
+<div id="popup" hidden>
+  <p>Амжилттай бүртгэгдлээ! 🎉</p>
+  <button onclick="closePopup()">Хаах</button>
+</div>
+
+<!-- Button -->
+<button onclick="showPopup()">Popup гаргах</button>
+
+<script>
+function showPopup() {
+  document.getElementById("popup").hidden = false;
+}
+
+function closePopup() {
+  document.getElementById("popup").hidden = true;
+}
+</script>

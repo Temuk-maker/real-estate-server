@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h3>Зар нэмэх</h3>
+
+<input id="title" placeholder="Гарчиг"><br><br>
+<textarea id="content" placeholder="Тайлбар"></textarea><br><br>
+<input type="file" id="imageInput" accept="image/*"><br><br>
+<button id="addBtn">Зар нэмэх</button>
+
+<hr>
+
+<h3>Хайлт</h3>
+<input id="search" placeholder="Хайх...">
+<ul id="results"></ul>
+
+<script>
+// --- 1. Заруудыг хадгалах массив ---
+let DATA = [];
+
+// --- 2. Cloudinary тохиргоо ---
+const CLOUD_NAME = "YOUR_CLOUD_NAME";   // ← өөрийн cloud нэрээр солино
+const UPLOAD_PRESET = "YOUR_PRESET";    // ← өөрийн "unsigned" preset
+
+// --- 3. Зураг Cloudinary руу upload хийх функц ---
+async function uploadImage(file) {
+  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
+
+  const res = await fetch(url, {
+    method: "POST",
+    body: formData
+  });
+  const data = await res.json();
+  return data.secure_url;  // ← буцааж байгаа зургийн URL
+}
+
+// --- 4. “Зар нэмэх” товч ---
+document.getElementById("addBtn").onclick = async function () {
+  const title = document.getElementById("title").value;
+  const content = document.getElementById("content").value;
+  const file = document.getElementById("imageInput").files[0];
+
+  if (!title || !content || !file) {
+    alert("Бүгдийг бөглөнө үү");
+    return;
+  }
+
+  // Зураг upload → Cloudinary URL авна
+  const imageURL = await uploadImage(file);
+
+  // DATA массивт нэмэх
+  DATA.push({
+    title: title,
+    content: content,
+    image: imageURL
+  });
+
+  alert("Зар нэмэгдлээ!");
+};
+
+
+// --- 5. Хайлтын систем ---
+document.getElementById("search").addEventListener("input", function () {
+  const q = this.value.toLowerCase();
+  const out = document.getElementById("results");
+  out.innerHTML = "";
+
+  if (!q) return;
+
+  DATA.forEach(item => {
+    const text = (item.title + item.content).toLowerCase();
+
+    if (text.includes(q)) {
+      const li = document.createElement("li");
+
+      const img = document.createElement("img");
+      img.src = item.image;
+      img.width = 120;
+
+      const title = document.createElement("div");
+      title.textContent = item.title;
+
+      li.appendChild(img);
+      li.appendChild(title);
+
+      out.appendChild(li);
+    }
+  });
+});
+</script>
+
+</body>
+</html>
