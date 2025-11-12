@@ -1,3 +1,6 @@
+// HTML, CSS, JS файлуудаа статик болгож serve хийх
+app.use(express.static(__dirname));
+
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
