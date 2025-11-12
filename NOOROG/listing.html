@@ -67,40 +67,41 @@
     </div>
   </div>
 
-<script>
-  const API = "http://localhost:3000";
-  const id = new URLSearchParams(location.search).get("id");
+  <script>
+    const API = "https://hotol-mn.onrender.com";
+    const id = new URLSearchParams(location.search).get("id");
+    
 
-  async function load() {
-    const res = await fetch(`${API}/api/listings/${id}`);
-    if (!res.ok) {
-      document.body.innerHTML = "<p>Зар олдсонгүй.</p>";
-      return;
+    async function load() {
+      const res = await fetch(`${API}/api/listings/${id}`);
+      if (!res.ok) {
+        document.body.innerHTML = "<p>Зар олдсонгүй.</p>";
+        return;
+      }
+
+      const it = await res.json();
+
+      document.getElementById("title").textContent = it.title;
+      document.getElementById("price").textContent =
+        new Intl.NumberFormat("mn-MN").format(it.price) + " ₮";
+      document.getElementById("desc").textContent = it.description;
+
+      const hero = document.getElementById("hero");
+      hero.src = it.images?.length ? (API + it.images[0]) : "https://via.placeholder.com/800x500";
+
+      const thumbs = document.getElementById("thumbs");
+      thumbs.innerHTML = "";
+
+      it.images.forEach((src) => {
+        const img = document.createElement("img");
+        img.src = API + src;
+        img.onclick = () => (hero.src = API + src);
+        thumbs.appendChild(img);
+      });
     }
 
-    const it = await res.json();
-
-    document.getElementById("title").textContent = it.title;
-    document.getElementById("price").textContent =
-      new Intl.NumberFormat("mn-MN").format(it.price) + " ₮";
-    document.getElementById("desc").textContent = it.description;
-
-    const hero = document.getElementById("hero");
-    hero.src = it.images?.length ? (API + it.images[0]) : "https://via.placeholder.com/800x500";
-
-    const thumbs = document.getElementById("thumbs");
-    thumbs.innerHTML = "";
-
-    it.images.forEach((src) => {
-      const img = document.createElement("img");
-      img.src = API + src;
-      img.onclick = () => (hero.src = API + src);
-      thumbs.appendChild(img);
-    });
-  }
-
-  load();
-</script>
+    load();
+  </script>
 
 </body>
 

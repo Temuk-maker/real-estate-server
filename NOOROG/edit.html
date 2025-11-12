@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="mn">
-<head><meta charset="UTF-8"><title>Зар засах</title></head>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Зар засах</title>
+</head>
+
 <body>
   <h2>Зар засах</h2>
   <input id="title" placeholder="Гарчиг"><br>
@@ -10,7 +15,7 @@
   <button id="delete">Устгах</button>
 
   <script>
-    const API = "http://localhost:3000";
+    const API = "https://hotol-mn.onrender.com";
     const params = new URLSearchParams(location.search);
     const id = params.get("id");
     const token = params.get("token");
@@ -38,4 +43,5 @@
     };
   </script>
 </body>
+
 </html>
